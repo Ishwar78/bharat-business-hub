@@ -5,7 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gem, Eye, EyeOff, Loader2, Download, CheckCircle2, Smartphone } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Gem, Eye, EyeOff, Loader2, Download, CheckCircle2, Smartphone, Share, MoreVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
@@ -16,7 +23,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { isInstallable, isInstalled, installApp } = usePWAInstall();
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+  const { isInstalled, canPrompt, installApp, platform } = usePWAInstall();
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -43,11 +51,50 @@ export default function Login() {
   };
 
   const handleInstall = async () => {
-    const success = await installApp();
-    if (success) {
+    const result = await installApp();
+    if (result === 'installed') {
       toast.success('App installed successfully!');
+    } else if (result === 'manual') {
+      setShowInstallDialog(true);
     }
   };
+
+  const getInstallInstructions = () => {
+    switch (platform) {
+      case 'ios':
+        return {
+          title: 'Install on iPhone/iPad',
+          steps: [
+            'Tap the Share button at the bottom of Safari',
+            'Scroll down and tap "Add to Home Screen"',
+            'Tap "Add" in the top right corner'
+          ],
+          icon: <Share className="h-5 w-5" />
+        };
+      case 'android':
+        return {
+          title: 'Install on Android',
+          steps: [
+            'Tap the menu button (⋮) in Chrome',
+            'Tap "Add to Home screen" or "Install app"',
+            'Tap "Add" to confirm'
+          ],
+          icon: <MoreVertical className="h-5 w-5" />
+        };
+      default:
+        return {
+          title: 'Install App',
+          steps: [
+            'Click the install icon in your browser\'s address bar',
+            'Or click the menu and select "Install app"',
+            'Click "Install" to confirm'
+          ],
+          icon: <Download className="h-5 w-5" />
+        };
+    }
+  };
+
+  const instructions = getInstallInstructions();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-sidebar-accent p-4">
@@ -57,44 +104,33 @@ export default function Login() {
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-gold-light rounded-full blur-3xl" />
       </div>
 
-      {/* Install PWA Banner */}
-      {(isInstallable || isInstalled) && (
-        <div className="absolute top-4 left-4 right-4 z-20">
-          <div className={`max-w-md mx-auto rounded-xl p-4 shadow-lg backdrop-blur-sm flex items-center gap-3 ${
-            isInstalled 
-              ? 'bg-success/20 border border-success/30' 
-              : 'bg-gold/20 border border-gold/30'
-          }`}>
-            <div className={`p-2 rounded-lg ${isInstalled ? 'bg-success/20' : 'bg-gold/20'}`}>
-              {isInstalled ? (
-                <CheckCircle2 className="h-5 w-5 text-success" />
-              ) : (
-                <Smartphone className="h-5 w-5 text-gold" />
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">
-                {isInstalled ? 'App Installed!' : 'Install App'}
-              </p>
-              <p className="text-xs text-white/70">
-                {isInstalled 
-                  ? 'You can access from home screen' 
-                  : 'Add to home screen for quick access'}
-              </p>
-            </div>
-            {isInstallable && (
-              <Button
-                onClick={handleInstall}
-                size="sm"
-                className="bg-gold hover:bg-gold-dark text-primary font-semibold"
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Install
-              </Button>
-            )}
+      {/* Install Instructions Dialog */}
+      <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {instructions.icon}
+              {instructions.title}
+            </DialogTitle>
+            <DialogDescription>
+              Follow these steps to install the app on your device
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            {instructions.steps.map((step, index) => (
+              <div key={index} className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                  {index + 1}
+                </div>
+                <p className="text-sm text-muted-foreground pt-0.5">{step}</p>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
+          <Button onClick={() => setShowInstallDialog(false)} className="w-full">
+            Got it!
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       <Card className="w-full max-w-md relative z-10 shadow-2xl border-0">
         <CardHeader className="text-center pb-2">
@@ -157,14 +193,14 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* PWA Install Button */}
+          {/* PWA Install Button - Always visible */}
           <div className="mt-4">
             {isInstalled ? (
               <div className="flex items-center justify-center gap-2 p-3 bg-success/10 rounded-lg border border-success/30">
                 <CheckCircle2 className="h-5 w-5 text-success" />
                 <span className="text-sm font-medium text-success">App Installed!</span>
               </div>
-            ) : isInstallable ? (
+            ) : (
               <Button
                 onClick={handleInstall}
                 className="w-full h-11 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white"
@@ -172,13 +208,6 @@ export default function Login() {
                 <Download className="mr-2 h-5 w-5" />
                 Install App on Device
               </Button>
-            ) : (
-              <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
-                <p className="text-xs text-muted-foreground text-center">
-                  <Smartphone className="h-3 w-3 inline mr-1" />
-                  <strong>Install App:</strong> Open in Chrome/Safari → Menu → Add to Home Screen
-                </p>
-              </div>
             )}
           </div>
 
