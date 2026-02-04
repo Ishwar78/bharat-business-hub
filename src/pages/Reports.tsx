@@ -12,9 +12,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileDown, FileSpreadsheet, Car, Gem, AlertCircle, IndianRupee } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Gem, AlertCircle, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {
+  exportFlexCollectionPDF,
+  exportFlexCollectionExcel,
+  exportPendingPaymentsPDF,
+  exportPendingPaymentsExcel,
+  exportGoldReportPDF,
+  exportGoldReportExcel,
+} from '@/utils/exportUtils';
 
 export default function Reports() {
   const { vehicles, payments, goldRecords } = useData();
@@ -36,9 +44,43 @@ export default function Reports() {
   const totalBuyValue = goldBuy.reduce((sum, r) => sum + r.totalValue, 0);
   const totalSellValue = goldSell.reduce((sum, r) => sum + r.totalValue, 0);
 
-  const handleExport = (type: 'pdf' | 'excel', report: string) => {
-    // In a real app, this would generate actual files
-    toast.success(`${report} exported as ${type.toUpperCase()}`);
+  const handleFlexExport = (type: 'pdf' | 'excel') => {
+    try {
+      if (type === 'pdf') {
+        exportFlexCollectionPDF(paidPayments, vehicles, totalFlexCollection);
+      } else {
+        exportFlexCollectionExcel(paidPayments, vehicles, totalFlexCollection);
+      }
+      toast.success(`Flex Collection Report exported as ${type.toUpperCase()}`);
+    } catch (error) {
+      toast.error('Export failed. Please try again.');
+    }
+  };
+
+  const handlePendingExport = (type: 'pdf' | 'excel') => {
+    try {
+      if (type === 'pdf') {
+        exportPendingPaymentsPDF(pendingPayments, vehicles, totalPendingAmount);
+      } else {
+        exportPendingPaymentsExcel(pendingPayments, vehicles, totalPendingAmount);
+      }
+      toast.success(`Pending Payments Report exported as ${type.toUpperCase()}`);
+    } catch (error) {
+      toast.error('Export failed. Please try again.');
+    }
+  };
+
+  const handleGoldExport = (type: 'pdf' | 'excel') => {
+    try {
+      if (type === 'pdf') {
+        exportGoldReportPDF(goldRecords, totalBuyValue, totalSellValue);
+      } else {
+        exportGoldReportExcel(goldRecords, totalBuyValue, totalSellValue);
+      }
+      toast.success(`Gold Report exported as ${type.toUpperCase()}`);
+    } catch (error) {
+      toast.error('Export failed. Please try again.');
+    }
   };
 
   const getVehicleDetails = (vehicleId: string) => {
@@ -127,11 +169,11 @@ export default function Reports() {
                   <p className="text-sm text-muted-foreground mt-1">All paid flex advertisements</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleExport('pdf', 'Flex Collection Report')}>
+                  <Button variant="outline" size="sm" onClick={() => handleFlexExport('pdf')}>
                     <FileDown className="mr-2 h-4 w-4" />
                     PDF
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleExport('excel', 'Flex Collection Report')}>
+                  <Button variant="outline" size="sm" onClick={() => handleFlexExport('excel')}>
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Excel
                   </Button>
@@ -182,11 +224,11 @@ export default function Reports() {
                   <p className="text-sm text-muted-foreground mt-1">Vehicles with pending payments</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleExport('pdf', 'Pending Payments Report')}>
+                  <Button variant="outline" size="sm" onClick={() => handlePendingExport('pdf')}>
                     <FileDown className="mr-2 h-4 w-4" />
                     PDF
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleExport('excel', 'Pending Payments Report')}>
+                  <Button variant="outline" size="sm" onClick={() => handlePendingExport('excel')}>
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Excel
                   </Button>
@@ -243,11 +285,11 @@ export default function Reports() {
                   <p className="text-sm text-muted-foreground mt-1">All gold buy/sell/repair records</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleExport('pdf', 'Gold Report')}>
+                  <Button variant="outline" size="sm" onClick={() => handleGoldExport('pdf')}>
                     <FileDown className="mr-2 h-4 w-4" />
                     PDF
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleExport('excel', 'Gold Report')}>
+                  <Button variant="outline" size="sm" onClick={() => handleGoldExport('excel')}>
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Excel
                   </Button>
