@@ -157,23 +157,38 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-muted rounded-lg">
+          {/* PWA Install Button */}
+          <div className="mt-4">
+            {isInstalled ? (
+              <div className="flex items-center justify-center gap-2 p-3 bg-success/10 rounded-lg border border-success/30">
+                <CheckCircle2 className="h-5 w-5 text-success" />
+                <span className="text-sm font-medium text-success">App Installed!</span>
+              </div>
+            ) : isInstallable ? (
+              <Button
+                onClick={handleInstall}
+                className="w-full h-11 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white"
+              >
+                <Download className="mr-2 h-5 w-5" />
+                Install App on Device
+              </Button>
+            ) : (
+              <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                <p className="text-xs text-muted-foreground text-center">
+                  <Smartphone className="h-3 w-3 inline mr-1" />
+                  <strong>Install App:</strong> Open in Chrome/Safari → Menu → Add to Home Screen
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 p-4 bg-muted rounded-lg">
             <p className="text-xs text-muted-foreground text-center">
               <strong>Demo Credentials:</strong><br />
               Email: Admingold@gmail<br />
               Password: Gold98765
             </p>
           </div>
-
-          {/* Mobile Install Instructions */}
-          {!isInstallable && !isInstalled && (
-            <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
-              <p className="text-xs text-muted-foreground text-center">
-                <Smartphone className="h-3 w-3 inline mr-1" />
-                <strong>Install as App:</strong> Open in Safari/Chrome → Share → Add to Home Screen
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
